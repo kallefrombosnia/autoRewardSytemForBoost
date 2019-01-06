@@ -1,0 +1,25 @@
+{
+    "commands":[
+      {
+        "admin":{
+          "flags":"abcdefghijkls",
+          "boosts":"2",
+          "description":"Obični admin"
+        }
+      },
+      {
+        "vip":{
+            "flags":"abcd",
+            "boosts":"3",
+            "description":"VIP igrač"
+        }
+      },
+      {
+        "abc":{
+            "flags":"z",
+            "boosts":"2",
+            "description":"Slot"
+        }
+      }
+    ]   
+}
