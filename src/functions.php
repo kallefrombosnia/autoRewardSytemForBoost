@@ -1,8 +1,8 @@
 <?php
 
-function init(){
+function init($ip){
     if (!file_exists('boosts.json')) {
-        $apicall = file_get_contents('http://www.mocky.io/v2/5c1524662e00006f0037c64f');
+        $apicall = file_get_contents('http://api.gametracker.rs/demo/json/server_boosts/'.$ip.'/');
         $apicall= json_decode(stripslashes(html_entity_decode($apicall)));
         $fp = fopen('boosts.json', 'w');
         fwrite($fp, json_encode($apicall));
@@ -10,13 +10,13 @@ function init(){
     }
 }
 
-function getServerBoosts(){
-    $boostlist = file_get_contents('http://www.mocky.io/v2/5c169e692f00007100b08422');
+function getServerBoosts($ip){
+    $boostlist = file_get_contents('http://api.gametracker.rs/demo/json/server_boosts/'.$ip.'/');
     return $boostlist;
 }
 
-function checkNewBoosts(){
-    $newlist = json_decode(getServerBoosts(),true);
+function checkNewBoosts($ip){
+    $newlist = json_decode(getServerBoosts($ip),true);
     $oldlist = json_decode(file_get_contents("boosts.json"),true);
     $difference= @array_diff_assoc($newlist['boosts'],$oldlist['boosts']);
 
@@ -61,7 +61,7 @@ function makeAdmin($name,$password,$type,$db){
         $flags = str_split($flagsdb);
         $flagsparse1 = str_split($flagsparse);
         foreach($flags as $flag){
-            if(strpos($flagsparse,$flag) !== false) continue;
+            if(@strpos($flagsparse,$flag) !== false) continue;
             $flagsparse1[] = $flag;    
         }
         $flags = (implode("",$flagsparse1));
@@ -72,11 +72,13 @@ function makeAdmin($name,$password,$type,$db){
         $stmt->close();
         deleteBoostEntry($name,$db);
     }else{
-        $stmt = $db->prepare("INSERT INTO admins(`auth`,`password`, `access`, `flags`) VALUES (?,?,?,?)");
-        $stmt->bind_param("ssss", $name, $password, $flagsdb, $type);     
-        if(!$stmt->execute()) echo $stmt->error;
-        $stmt->close();
-        deleteBoostEntry($name,$db);
+        if($name !== ""){
+            $stmt = $db->prepare("INSERT INTO admins(`auth`,`password`, `access`, `flags`) VALUES (?,?,?,?)");
+            $stmt->bind_param("ssss", $name, $password, $flagsdb, $type);     
+            if(!$stmt->execute()) echo $stmt->error;
+            $stmt->close();
+            deleteBoostEntry($name,$db);
+        }
     }
     
 }
@@ -96,13 +98,13 @@ function deleteBoostEntry($name,$db){
     $stmt->close();
 }
 
-function main(){
+function main($ip,$db){
 
     include_once('./config.php');
+    
+    if(checkNewBoosts($ip)){  
 
-    if(checkNewBoosts()){  
-
-        $boosts = checkNewBoosts();
+        $boosts = checkNewBoosts($ip);
         $commandlist = (array)json_decode(file_get_contents("class.json"),true);
 
         foreach($boosts as $key => $boost){
@@ -124,7 +126,7 @@ function main(){
             foreach($commandlist as $cmd){
                 $count = (count($cmd)-1);
                 for($i= 0; $i<=$count; $i++){  
-                    if(@array_key_exists($command,$cmd[$i])){
+                    if(array_key_exists($command,$cmd[$i])){
                         foreach($cmd[$i] as $command){
                             $flags = $command['flags'];
                             $needed = $command['boosts'];
@@ -173,11 +175,13 @@ function main(){
 
             }else{
 
-                $have = 1;
-                $stmt = $db->prepare("INSERT INTO boost(nickname,have,needed,flags) VALUES (?,?,?,?)");
-                $stmt->bind_param("ssss", $name, $have, $needed, $flags);     
-                $stmt->execute(); 
-                $stmt->close();
+                if($name !== ""){
+                    $have = 1;
+                    $stmt = $db->prepare("INSERT INTO boost(nickname,have,needed,flags) VALUES (?,?,?,?)");
+                    $stmt->bind_param("ssss", $name, $have, $needed, $flags);     
+                    $stmt->execute(); 
+                    $stmt->close();
+                }
 
                 if(checkNumberOfBoosts($name,$db)){
                     makeAdmin($name,$password,'a',$db);      
@@ -185,7 +189,7 @@ function main(){
             }
 
         } 
-        updateJsonBoostList(getServerBoosts());
+        updateJsonBoostList(getServerBoosts($ip));
     }
 
 }

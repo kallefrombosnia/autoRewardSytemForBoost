@@ -15,8 +15,8 @@
         }
       },
       {
-        "abc":{
-            "flags":"z",
+        "potpisa":{
+            "flags":"abczd",
             "boosts":"2",
             "description":"Slot"
         }

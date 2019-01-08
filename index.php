@@ -1,9 +1,10 @@
 <?php
 // Include all needed libs and config file
+include_once('config.php');
 include_once('./src/functions.php');
 
-init();
+init($server['ip']);
 sleep(2);
-main();
+main($server['ip'],$db);
 
 ?> 
